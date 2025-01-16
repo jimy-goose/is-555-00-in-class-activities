@@ -6,7 +6,7 @@ library(tidyverse)
 df <- starwars
 
 # glimpse turns a data frame on its side for viewing. Super useful.
-
+df |> glimpse()
 
 
 # iteratively add operations with the pipe operator: 
@@ -16,14 +16,21 @@ df <- starwars
 # arrange by mass
 # note: columns can contain lists; more on that later
 # note: filtering on some logical excludes NAs
+df |>
+  filter(height > 100) |>
+  filter(sex == 'female') |> # or do filter(height > 100, sex == 'female')
+  select(name, height, mass, species, films)|>
+  filter(mass >50) |>
+  arrange(desc(mass))
 
 
 # calculate a new column,weight_lbs = mass * 2.204623
 # Make sure it gets saved to the tibble...
+my_result <- df |>
+mutate(weight_in_lbs = mass * 2.204623)
 
 
-
-# group and summarize. Pay attention to NAs
+   # group and summarize. Pay attention to NAs
 # get a count and mean mass by species
 
 
