@@ -14,6 +14,9 @@
 #             where you can specify whether you want to hold the x and/or y
 #             axis scales constant across all of the facets.
 
+install.packages('ggthemes')
+library(tidyverse)
+library(ggthemes)
 
 # Facets and multi-lines --------------------------------------------------------------------------------
 
@@ -21,9 +24,16 @@ tips <- read_csv('https://www.dropbox.com/s/rydxlxdarjdoj7a/tips.csv?dl=1')
 
 # Let's plot tip_percentage vs. total_bill,
 # then split that across lots of categories
+tips |> 
+count(size)
 
+tips |> 
+  ggplot(aes(x= total_bill,y = tip, color = smoker)) +
+  geom_point(size = 3) +
+  facet_wrap(sex~size, scales = 'free') +
+  theme_clean()
 
-
+--- change to as character
 
 econ <- read_csv('https://www.dropbox.com/s/8bq9rw0rk46hru2/econ.csv?dl=1')
 
