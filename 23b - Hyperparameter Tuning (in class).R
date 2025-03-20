@@ -75,6 +75,7 @@ cr_wkfl_tunable <- workflow() %>%
 params <- extract_parameter_set_dials(cr_wkfl_tunable)
 
 tuning_grid <- grid_random(params, size = 50)
+grid_latin <- grid_latin_hypercube(params, size = 50)
 
 
 doParallel::registerDoParallel(cores = future::availableCores()-1)
@@ -84,23 +85,25 @@ tuning_results <- cr_wkfl_tunable %>%
   tune_grid(grid = tuning_grid,
             resamples = cr_folds)
 
-tuning_results %>% collect_metrics()
+tuning_results %>% collect_metrics() %>% filter(.metric == 'roc_auc') %>% arrange(-mean)
+
+tuning_results %>% show_best(metric = 'roc_auc')
+
 tuning_results %>% collect_metrics(summarize = F)
-
-
 tuning_results %>% show_best()
-tuning_results %>% show_best(metric = 'rsq')
-best_parameters <- tuning_results %>% select_best()
+
+
+best_parameters <- tuning_results %>% select_best('roc_auc')
 
 # That best setup can be passed to finalize_workflow() to setup a final workflow to finish our pipeline
-finalized_wkfl <- tunable_wkfl %>% 
+finalized_wkfl <- cr_wkfl_tunable %>% 
   finalize_workflow(best_parameters)
 
 
 
 # Now we use last_fit()
 final_fit <- finalized_wkfl %>% 
-  last_fit(split = housing_split)
+  last_fit(split = cr_split)
 
 final_fit %>% collect_metrics()
 final_fit %>% collect_predictions()
