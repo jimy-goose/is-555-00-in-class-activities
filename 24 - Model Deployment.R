@@ -69,11 +69,13 @@ pr() %>%
 # library(tidyverse)
 # library(tidymodels)
 # library(vetiver)
+# library(jsonlite)
+# library(httr)
 # 
 # next_months_data <- read_csv('https://www.dropbox.com/scl/fi/ztf8ipi4i4n5rfwtwcmh0/housing_testing.csv?rlkey=yecihhbp6hbf88rfr9w3kysbk&dl=1')
 # 
 # 
-# local_api <- vetiver_endpoint("http://127.0.0.1:8888/predict")
+# local_api <- vetiver_endpoint("http://127.0.0.1:8000/predict")
 # 
 # # Now use the standard predict function to hit the api with our new data:
 # api_preds <- predict(local_api,
@@ -83,16 +85,33 @@ pr() %>%
 # next_months_data %>%
 #   bind_cols(api_preds) %>%
 #   rsq(truth = sale_price, estimate = .pred)
+# 
+# one_house <- next_months_data %>% slice_sample(n=1)
+# 
+# one_house_json <- toJSON(one_house)
+# response <- POST('http://127.0.0.1:8000/predict',
+#                         body = one_house_json)
+# response_json <- content(response,
+#                                 as = "text",
+#                                 encoding = "UTF-8")
+# single_pred_api <- fromJSON(response_json) %>% as_tibble
 
+
+
+
+# Set your working directory somewhere reasonable
+working_dir <- '~/Desktop/in-class-demo/'
+fs::dir_create(working_dir)
+setwd(working_dir)
 
 # Let's look at publishing with the pins package:
 # First, create a "pin-board"
-pin_board <- board_folder('~/Desktop/in-class-demo/models', versioned = TRUE)
+pin_board <- board_folder('models', versioned = TRUE)
 
 
 # Write the (deployable) vetiver model object to the board:
 pin_board %>% vetiver_pin_write(deployable_model)
-vetiver_pin_write(pin_board, deployable_model)
+
 
 # Boards can hold lots of different models (and versions). These can be listed 
 # and retreived. 
@@ -102,7 +121,17 @@ pin_board %>% pin_versions('house_prices')
 
 # Moving from a pin board to a docker-based plumber API is as simple as preparing
 # the docker scripts:
-vetiver_prepare_docker(pin_board, "house_prices", version = '20240320T231653Z-4806b', path = '~/Desktop/in-class-demo/')
+vetiver_prepare_docker(pin_board, "house_prices")
+
+
+# From the exported folder path, you can:
+# 0.  Make sure the plumber.R file makes sense 
+# 1.  Build a docker image: 
+#       >>  docker build -t housing .
+# 2.  Run a container from the image: 
+#       >>  docker run --name housing -v $(pwd)/models:/opt/ml/models -p 8000:8000 housing
+# 3.  To debug: 
+#       >>  docker run --rm -it docker-v $(pwd)/models:/opt/ml/models --entrypoint bash 
 
 
 
